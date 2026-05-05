@@ -22,7 +22,8 @@ void Sleep(WORD msec)
 
 	do
 	{
-		for(i = 0; i < 125; i++){;}	// time wasting loop. It must take approx 1ms to execute
+		for(i = 0; i < 160; i++){;}	// time wasting loop. It must take approx 1ms to execute
+		for(i = 0; i < 160; i++){;}
 	}
 	while(msec-- > 0);
 }

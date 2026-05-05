@@ -15,8 +15,6 @@
 #include "LCD.h"		// LCD control codes
 #include "DS1820.h"		// DS1820 control codes
 #include "Exports.h"	// exported functions prototypes
-//#include "LCDexp.h"	// LCD function prototypes
-//#include "DS1820ex.h"	// DS1820 function prototypes
 
 // RS232 interface initialization. Timer 1 is sacrificed for this purpose.
 void Init_RS232()
@@ -41,36 +39,41 @@ code char szHumidRus[] = {' ', 'B', 0x02, 'A', 0x03, 'H', 'O', 'C', 'T', 0x04, '
 
 // Final data structures
 // ---------------------
-//idata char szLcdBuf0[16];	// temporary buffer for formatting text before output to LCD, upper line
-//idata char szLcdBuf1[16];	// temporary buffer for formatting text before output to LCD, lower line
 idata char szLcdBuf[2][16];	// temporary buffer for formatting text before output to LCD, two lines
 
-// Patterns of Cyrullic letters for CGRAM loading
-code BYTE RusPattern[6][8] = 
+// Patterns of Cyrullic letters for CGRAM loading (Pe, Y, L, Ze, m.znak, Ya, Che, I)
+#define NUM_CUSTOM_CHARACTERS	8
+#define NUM_LINES_IN_PATTERN	8
+
+code BYTE RusPattern[NUM_CUSTOM_CHARACTERS][NUM_LINES_IN_PATTERN] = 
 	{	0x1F, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x00,\
 		0x11, 0x11, 0x11, 0x0A, 0x04, 0x08, 0x10, 0x00,\
 		0x07, 0x09, 0x11, 0x11, 0x11, 0x11, 0x11, 0x00,\
 		0x15, 0x15, 0x0E, 0x04, 0x0E, 0x15, 0x15, 0x00,\
 		0x10, 0x10, 0x10, 0x1E, 0x11, 0x11, 0x1E, 0x00,\
-		0x0F, 0x11, 0x11, 0x0F, 0x05, 0x09, 0x11, 0x00};
+		0x0F, 0x11, 0x11, 0x0F, 0x05, 0x09, 0x11, 0x00,\
+		0x11, 0x11, 0x11, 0x0F, 0x01, 0x01, 0x01, 0x00,\
+		0x11, 0x11, 0x13, 0x15, 0x19, 0x11, 0x11, 0x00};
+
+// Intro message
+code char* szIntro[] = {"  Dual Channel  ", "Thermometer V1.0"};
 
 // Error messages
-//code char szNoSensor0[] = "Missing sensor 0";
-//code char szNoSensor1[] = "Missing sensor 1";
-code char* szNoSensor[] = {"Missing sensor 0", "Missing sensor 1"};
+code char* szNoSensorEng[] = {"Missing sensor 0", "Missing sensor 1"};
+code char* szNoSensorRus[] = {"HET CEHCOPA  #0", "HET CEHCOPA  #1"};
 
 // ID headers
-//code char szIdHdr0[4] = "ID0:";
-//code char szIdHdr1[4] = "ID1:";
 code char* szIdHdr[] = {"ID0:", "ID1:"};
 
 // Measurements in English
-code char szTempInEng[] = {' ','I','N','D','O','O','R',' ',' ',' ',' ','2','2','.','0',0xDF};
+code char szTempInEng[] =  {' ','I','N','D','O','O','R',' ',' ',' ',' ','2','2','.','0',0xDF};
 code char szTempOutEng[] = {' ','O','U','T','D','O','O','R',' ',' ',' ','3','1','.','5',0xDF};
 
 // Measurements in Russian
-code char szTempInRus[] = {'B','H',0x01,'T','P','E','H','H',0x05,0x05,' ','2','2','.','0',0xDF};
-code char szTempOutRus[] = {' ','H','A','P',0x01,0x03,'H','A',0x05,' ',' ','3','1','.','5',0xDF};
+//code char szTempInRus[] = {'B','H',0x01,'T','P','E','H','H',0x05,0x05,' ','2','2','.','0',0xDF};
+//code char szTempOutRus[] = {' ','H','A','P',0x01,0x03,'H','A',0x05,' ',' ','3','1','.','5',0xDF};
+code char szTempInRus[] =  {'K','O' ,'M' ,'H' ,'A' ,'T','H','A' ,0x05,' ',' ','2','2','.','0',0xDF};
+code char szTempOutRus[] = {' ',0x01,0x02,0x07,0x06,'H','A',0x05,' ' ,' ',' ','3','1','.','5',0xDF};
 
 // Hex numbers trannslation table
 code char szHexTable[] = {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
@@ -94,6 +97,8 @@ sbit LANG_SWITCH	= P3^6;	// #WR
 // mapping of auxiliary LED
 sbit LED		= P3^7;	// #RD
 
+// mapping of DIP switch (selector of delay between measurements)
+
 void InitAndConfigure_LCD()
 {
 	int i, j;
@@ -108,12 +113,32 @@ void InitAndConfigure_LCD()
 	DisplayOnOff(DOO_LCD_ON | DOO_CURSOR_OFF | DOO_BLINK_OFF);
 
 	// load CGRAM with Cyrillic patterns
-	for(i = 0; i < 6; i++)
-		for(j = 0; j < 8; j++)
+	for(i = 0; i < NUM_CUSTOM_CHARACTERS; i++)
+		for(j = 0; j < NUM_LINES_IN_PATTERN; j++)
 		{
 			Set_CGRAM_Addr(bAddr++);
 			Set_RAM_Data(RusPattern[i][j]);
 		}
+}
+
+void PutIntroMessage()
+{
+	int j;
+
+	ClearDisplay();
+	Set_DDRAM_Addr(START_OF_FIRST_LINE);
+
+	bAddr = 0;	// reset address
+
+	for(j = 0; j < LCD_LINE_LENGTH; j++)
+		Set_RAM_Data((BYTE)szIntro[0][bAddr++]);
+	
+	Set_DDRAM_Addr(START_OF_SECOND_LINE);
+	
+	bAddr = 0;
+
+	for(j = 0; j < LCD_LINE_LENGTH; j++)
+		Set_RAM_Data((BYTE)szIntro[1][bAddr++]);
 }
 
 void PutDemoInEnglish()
@@ -246,10 +271,10 @@ void DisplayLcdBuffer()
 {
 	int j;	// loop iterator
 
-	ClearDisplay();
+//	ClearDisplay();
 
 	// display upper line
-	Set_DDRAM_Addr(0);
+	Set_DDRAM_Addr(START_OF_FIRST_LINE);
 
 	bAddr = 0;
 
@@ -257,7 +282,7 @@ void DisplayLcdBuffer()
 		Set_RAM_Data((BYTE)szLcdBuf[0][bAddr++]);
 	
 	// display lower line
-	Set_DDRAM_Addr(0x40);
+	Set_DDRAM_Addr(START_OF_SECOND_LINE);
 	
 	bAddr = 0;
 
@@ -344,7 +369,6 @@ void DispByte(BYTE i)
 void main (void)
 {
 	BYTE i, j;
-//	char j;	// loop iterators	// it was *int* before.It must be signed, since we use downcount
 
 	// initialize serial port
 	Init_RS232();
@@ -352,7 +376,11 @@ void main (void)
 	// init and configure LCD
 	InitAndConfigure_LCD();
 
-//	printf("LCD init done\n");
+	// put intro message
+	PutIntroMessage();
+
+	// give user a chance to read it
+	Sleep(5000);	// 5 sec delay
 
 	// ========================================================================
 	// Check sensors presence. Format LCD buffer according to the system state.
@@ -393,7 +421,6 @@ void main (void)
 			// Copy ID header string to the LCD buffer
 			for(j = 0; j < 4; j++)
 				szLcdBuf[i][j] = szIdHdr[i][j];
-//			memcpy(szLcdBuf[i], szIdHdr[i], 4);
 
 			// The first byte is a family code, make a dummy read
 			bTmp = DS1820_ReadByte(i);
@@ -424,30 +451,27 @@ void main (void)
 			bNoSensor = 1;
 			
 			// output warning to RS-232
-			printf("%s\n", szNoSensor[i]);
+			printf("%s\n", szNoSensorEng[i]);
 			
-			// copy warning to LCD buffer
-			for(j = 0; j < LCD_LINE_LENGTH; j++)
-				szLcdBuf[i][j] = szNoSensor[i][j];
-//			memcpy(szLcdBuf[i], szNoSensor[i], LCD_LINE_LENGTH);
+			// copy warning to LCD buffer accprding to selected language
+			if(LANG_SWITCH == OUTPUT_IN_RUSSIAN)
+			{
+				for(j = 0; j < LCD_LINE_LENGTH; j++)
+					szLcdBuf[i][j] = szNoSensorRus[i][j];
+			}
+			else
+			{
+				for(j = 0; j < LCD_LINE_LENGTH; j++)
+					szLcdBuf[i][j] = szNoSensorEng[i][j];
+			}
 		}
 	}
-
-//	printf("before displaying buffer\n");
-
-//	for(j = 0; j < LCD_LINE_LENGTH; j++)
-//		printf("%c %c\n", szLcdBuf[0][j], szLcdBuf[1][j]);
-
-//	printf("%s\n", szLcdBuf[0]);
-//	printf("%s\n", szLcdBuf[1]);
 
 	// Display formatted LCD buffer
 	DisplayLcdBuffer();
 
 	// give user a chance to read it
-	Sleep(20000);	// 20 sec delay
-
-//	printf("after displaying buffer\n");
+	Sleep(10000);	// 10 sec delay
 
 	// As was mentioned before, if it appears that one of the temperature sensors is missing,
 	// we willl not proceed further and stop here kicking around in endless loop
@@ -471,9 +495,6 @@ void main (void)
 			szLcdBuf[0][j] = szTempInRus[j];
 			szLcdBuf[1][j] = szTempOutRus[j];
 		}
-
-//		memcpy(szLcdBuf[0], szTempInRus, LCD_LINE_LENGTH);
-//		memcpy(szLcdBuf[1], szTempOutRus, LCD_LINE_LENGTH);
 	}
 	else
 	{
@@ -482,57 +503,8 @@ void main (void)
 			szLcdBuf[0][j] = szTempInEng[j];
 			szLcdBuf[1][j] = szTempOutEng[j];
 		}
-
-//		memcpy(szLcdBuf[0], szTempInEng, LCD_LINE_LENGTH);
-//		memcpy(szLcdBuf[1], szTempOutEng, LCD_LINE_LENGTH);
 	}
 
-/*
-	// debug stuff only
-	// ---------------
-	DisplayLcdBuffer();
-
-	Sleep(5000);
-
-	LED = 0;
-
-	if(DS1820_ReadTemp(0, &wTemperature, &bTempSign))
-		printf("Temp 0 = %d\n", (int)wTemperature);
-	else
-		printf("Failed\n");
-
-	if(DS1820_ReadTemp(1, &wTemperature, &bTempSign))
-		printf("Temp 1 = %d\n", (int)wTemperature);
-	else
-		printf("Failed\n");
-
-	LED = 1;
-
-	PutDemoInEnglish();
-
-	Sleep(5000);
-
-	PutDemoInRussian();
-
-	// attempt to display formatted temperature
-	bVal = 5;
-	sprintf(Buff, "%5.4d", (int)bVal);
-	printf("%s", Buff);
-
-	bVal = 25;
-	sprintf(Buff, "%5.4d", (int)bVal);
-	printf("%s", Buff);
-
-	bVal = 125;
-	sprintf(Buff, "%5.4d", (int)bVal);
-	printf("%s", Buff);
-
-	bVal = 0;
-	sprintf(Buff, "%5.4d", (int)bVal);
-	printf("%s", Buff);
-
-	// END OF DEBUG STUFF
-*/
 
 	// ========================================================================
 	// Here we enter the main loop. It's rather sumple, only three tasks are

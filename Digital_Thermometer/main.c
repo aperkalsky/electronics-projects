@@ -16,30 +16,13 @@
 #include "DS1820.h"		// DS1820 control codes
 #include "Exports.h"	// exported functions prototypes
 
-// RS232 interface initialization. Timer 1 is sacrificed for this purpose.
-void Init_RS232()
-{
-	SCON  = 0x50;                   /* SCON: mode 1, 8-bit UART, enable rcvr    */
-	TMOD |= 0x20;                   /* TMOD: timer 1, mode 2, 8-bit reload      */
-	TH1   = 0xf3;                   /* TH1:  reload value for 2400 baud         */
-	TR1   = 1;                      /* TR1:  timer 1 run                        */
-	TI    = 1;                      /* TI:   set TI to send first char of UART  */
-}
-
 // ------------------------------------------------------------------------------
 //			LCD interface support
 // ------------------------------------------------------------------------------
 
-// Data structures
-code char szTempEng[] = "TEMPERATURE 25.5";
-code char szHumidEng[] = " HUMIDITY   30%";
-
-code char szTempRus[] = {'T', 'E', 'M' ,0x00, 'E', 'P', 'A', 'T', 0x01, 'P', 'A', ' ', '2','5', '.', '5'};
-code char szHumidRus[] = {' ', 'B', 0x02, 'A', 0x03, 'H', 'O', 'C', 'T', 0x04, ' ', ' ', '3', '0', '%'};
-
 // Final data structures
 // ---------------------
-idata char szLcdBuf[2][16];	// temporary buffer for formatting text before output to LCD, two lines
+idata char szLcdBuf[NUM_LCD_LINES][LCD_LINE_LENGTH];	// temporary buffer for formatting text before output to LCD, two lines
 
 // Patterns of Cyrullic letters for CGRAM loading (Pe, Y, L, Ze, m.znak, Ya, Che, I)
 #define NUM_CUSTOM_CHARACTERS	8
@@ -56,11 +39,15 @@ code BYTE RusPattern[NUM_CUSTOM_CHARACTERS][NUM_LINES_IN_PATTERN] =
 		0x11, 0x11, 0x13, 0x15, 0x19, 0x11, 0x11, 0x00};
 
 // Intro message
-code char* szIntro[] = {"  Dual Channel  ", "Thermometer V1.0"};
+code char* szIntro[] = {"  Dual Channel  ", "Thermometer V1.1"};
 
 // Error messages
 code char* szNoSensorEng[] = {"Missing sensor 0", "Missing sensor 1"};
-code char* szNoSensorRus[] = {"HET CEHCOPA  #0", "HET CEHCOPA  #1"};
+//code char* szNoSensorRus[] = {"HET CEHCOPA  #0", "HET CEHCOPA  #1"};
+
+code char szNoSensorRus[NUM_LCD_LINES][LCD_LINE_LENGTH] =	// error messages in Russian
+	{'H', 'E', ' ', 'B', 0x07, 0x03, 0x01, ' ', 'C', 'E', 'H', 'C', 'O', 'P', ' ', '0',\
+	 'H', 'E', ' ', 'B', 0x07, 0x03, 0x01, ' ', 'C', 'E', 'H', 'C', 'O', 'P', ' ', '1'};
 
 // ID headers
 code char* szIdHdr[] = {"ID0:", "ID1:"};
@@ -70,8 +57,6 @@ code char szTempInEng[] =  {' ','I','N','D','O','O','R',' ',' ',' ',' ','2','2',
 code char szTempOutEng[] = {' ','O','U','T','D','O','O','R',' ',' ',' ','3','1','.','5',0xDF};
 
 // Measurements in Russian
-//code char szTempInRus[] = {'B','H',0x01,'T','P','E','H','H',0x05,0x05,' ','2','2','.','0',0xDF};
-//code char szTempOutRus[] = {' ','H','A','P',0x01,0x03,'H','A',0x05,' ',' ','3','1','.','5',0xDF};
 code char szTempInRus[] =  {'K','O' ,'M' ,'H' ,'A' ,'T','H','A' ,0x05,' ',' ','2','2','.','0',0xDF};
 code char szTempOutRus[] = {' ',0x01,0x02,0x07,0x06,'H','A',0x05,' ' ,' ',' ','3','1','.','5',0xDF};
 
@@ -97,7 +82,19 @@ sbit LANG_SWITCH	= P3^6;	// #WR
 // mapping of auxiliary LED
 sbit LED		= P3^7;	// #RD
 
+// LED is tied up to Vcc
+#define LED_ON	0
+#define LED_OFF	1
+
 // mapping of DIP switch (selector of delay between measurements)
+sbit DELAY_SELECT_LO = P3^0;	// RXD
+sbit DELAY_SELECT_HI = P3^1;	// TXD
+
+// switch statuses
+#define DELAY_A		0
+#define DELAY_B		1
+#define DELAY_C		2
+#define DELAY_D		3
 
 void InitAndConfigure_LCD()
 {
@@ -141,46 +138,6 @@ void PutIntroMessage()
 		Set_RAM_Data((BYTE)szIntro[1][bAddr++]);
 }
 
-void PutDemoInEnglish()
-{
-	int j;
-
-	ClearDisplay();
-	Set_DDRAM_Addr(0);
-
-	bAddr = 0;	// reset address
-
-	for(j = 0; j < sizeof(szTempEng) - 1; j++)
-		Set_RAM_Data((BYTE)szTempEng[bAddr++]);
-	
-	Set_DDRAM_Addr(0x40);
-	
-	bAddr = 0;
-
-	for(j = 0; j < sizeof(szHumidEng) - 1; j++)
-		Set_RAM_Data((BYTE)szHumidEng[bAddr++]);
-}
-
-void PutDemoInRussian()
-{
-	int j;
-
-	ClearDisplay();
-	Set_DDRAM_Addr(START_OF_FIRST_LINE);
-
-	bAddr = 0;
-
-	for(j = 0; j < sizeof(szTempRus); j++)
-		Set_RAM_Data((BYTE)szTempRus[bAddr++]);
-	
-	Set_DDRAM_Addr(START_OF_SECOND_LINE);
-	
-	bAddr = 0;
-
-	for(j = 0; j < sizeof(szHumidRus); j++)
-		Set_RAM_Data((BYTE)szHumidRus[bAddr++]);
-}
-
 /*
 	Function name: UpdateTempInBuffer()
 
@@ -191,7 +148,7 @@ void PutDemoInRussian()
 	Input:
 		bIndex - index of line in LCD buffer to update
 		wTemperature - temperature value (module)
-		bNegative - temperature sign. Zer of positive
+		bNegative - temperature sign. Zero if positive
 
 	Output:
 		None
@@ -207,40 +164,53 @@ void PutDemoInRussian()
 			   20
 			    0
 			------
-			012345 - index withitn buffer
+           012345 - index within buffer
+
+			 1111 - index within LCD buffer
+			90124
+
+		LCD buffer layout:
+		   -----------------------------------------------------------------
+		   |' ','O','U','T','D','O','O','R',' ',' ','+','3','1','.','5','°'|	LCD
+		   -----------------------------------------------------------------
+             I   I   I   I   I   I   I   I   I   I   I   I   I   I   I   I
+		   -----------------------------------------------------------------
+		   | 0   1   2   3   4   5   6   7   8   9   1   1   1   1   1   1 |
+		   |                                         0   1   2   3   4   5 |	LCD buffer
+		   -----------------------------------------------------------------
+                                                 I   I   I   I       I      
+		   -----------------------------------------------------------------
+		   |                                 0   1   2   3   4       5     |	Temporary buffer
+		   -----------------------------------------------------------------
 */
 void UpdateTempInBuffer(BYTE bIndex, WORD wTemprValue, BYTE bNegative)
 {
 	// print module of temperature in temporary buffer
-//	sprintf(Buff, "%6.5d", (int)wTemprValue);
 	sprintf(Buff, "%6.5d", (int)wTemprValue);
 
 	// Apply one more zero to values less than 1 degree (0 and 5)
 	if((wTemprValue == 0) || (wTemprValue == 5))
-		Buff[3] = '0';
+		Buff[4] = '0';
 
 	// Apply temperature sign. Zero will be displayed with no sign
-	if(wTemprValue != 0)
+	if(wTemprValue)
 	{
-		// for two-digit values
-		if(Buff[2] == ' ')
-		{
-			Buff[2] = bNegative?'-':'+';
-		}
+		// for values less than 10
+		if(Buff[3] == ' ')
+			Buff[3] = bNegative?'-':'+';
 		else
 		{
-			// for three-digit values
-			if(Buff[1] == ' ')
-			{
-				Buff[1] = bNegative?'-':'+';
-			}
+			// for values less than 100
+			if(Buff[2] == ' ')
+				Buff[2] = bNegative?'-':'+';
 			else
-				Buff[0] = bNegative?'-':'+';	// this is four-digit value
+			{
+				// for values less than 1000
+				if(Buff[1] == ' ')
+					Buff[1] = bNegative?'-':'+';
+			}
 		}
 	}
-
-	// check results
-	printf("%s\n", Buff);
 
 	// Now copy formatted value to the LCD buffer
 	szLcdBuf[bIndex][14] = Buff[5];
@@ -290,88 +260,17 @@ void DisplayLcdBuffer()
 		Set_RAM_Data((BYTE)szLcdBuf[1][bAddr++]);
 }
 
-void DispByte(BYTE i)
-{
-	switch(i)
-	{
-	case 0x00:
-		printf("0\n");
-		break;
-
-	case 0x01:
-		printf("1\n");
-		break;
-
-	case 0x02:
-		printf("2\n");
-		break;
-
-	case 0x03:
-		printf("3\n");
-		break;
-
-	case 0x04:
-		printf("4\n");
-		break;
-
-	case 0x05:
-		printf("5\n");
-		break;
-
-	case 0x06:
-		printf("6\n");
-		break;
-
-	case 0x07:
-		printf("7\n");
-		break;
-
-	case 0x08:
-		printf("8\n");
-		break;
-
-	case 0x09:
-		printf("9\n");
-		break;
-
-	case 0x0A:
-		printf("A\n");
-		break;
-
-	case 0x0B:
-		printf("B\n");
-		break;
-
-	case 0x0C:
-		printf("C\n");
-		break;
-
-	case 0x0D:
-		printf("D\n");
-		break;
-
-	case 0x0E:
-		printf("E\n");
-		break;
-
-	case 0x0F:
-		printf("F\n");
-		break;
-
-	default:
-		printf("%d > 0x0F\n", i);
-	}
-}
 
 /****************/
 /* main program */
 /****************/
 void main (void)
 {
-	BYTE i, j;
+	BYTE i, j;			// loop iterators
+	BYTE bDelayValue;	// reading of time selecting DIP switch
 
 	// initialize serial port
-	Init_RS232();
+//	Init_RS232();
 
 	// init and configure LCD
 	InitAndConfigure_LCD();
@@ -409,6 +308,9 @@ void main (void)
 	// sensor ID only.
 	// ========================================================================
 
+	// turn LED on
+	LED = LED_ON;
+			
 	// query both sensors in turn
 	for(i = 0; i < 2; i++)
 	{
@@ -444,14 +346,9 @@ void main (void)
 		}
 		else
 		{	// ** error case **
-			
-			printf("sensor %02x failed init\n", i);
 
 			// set error flag
 			bNoSensor = 1;
-			
-			// output warning to RS-232
-			printf("%s\n", szNoSensorEng[i]);
 			
 			// copy warning to LCD buffer accprding to selected language
 			if(LANG_SWITCH == OUTPUT_IN_RUSSIAN)
@@ -467,18 +364,28 @@ void main (void)
 		}
 	}
 
+	// turn LED off
+	LED = LED_OFF;
+	
 	// Display formatted LCD buffer
 	DisplayLcdBuffer();
-
-	// give user a chance to read it
-	Sleep(10000);	// 10 sec delay
 
 	// As was mentioned before, if it appears that one of the temperature sensors is missing,
 	// we willl not proceed further and stop here kicking around in endless loop
 	if(bNoSensor)
 	{
-		while(1){;};	// loop here forever
+		while(1)
+		{
+			// blink LED
+			LED = LED_ON;
+			Sleep(500);
+			LED = LED_OFF;
+			Sleep(500);
+		};	// loop here forever
 	}
+
+	// In the case that the sensors are present give user a chance to read their IDs
+	Sleep(10000);	// 10 sec delay
 
 	// ========================================================================
 	// If we are here, both sensors are persent and we can enter a main loop where we will
@@ -519,7 +426,7 @@ void main (void)
 	while(1)
 	{
 		// turn LED on
-		LED = 0;
+		LED = LED_ON;
 
 		// query both sensors in turn and update display
 		for(i = 0; i < 2; i++)
@@ -529,20 +436,37 @@ void main (void)
 
 			// update relevant buffer contents
 			UpdateTempInBuffer(i, wTemperature, bTempSign);
-
-			// update display buffer
-			// TODO
-			printf("Temp %d = %d, sign = %02X\n", (int)i, (int)wTemperature, (int)bTempSign);
 		}
 
 		// turn LED off
-		LED = 1;
+		LED = LED_OFF;
 
 		// refresh LCD output
 		DisplayLcdBuffer();
 
 		// wait here in time wasting loop. Using Sleep() we can reach one minute value
-		// in one call
-		Sleep(60000);	// 60 sec delay
+		// in one call. The wait time is a configurable parameter, so we need to study
+		// state of external DIP switch and make a delay according to it
+		bDelayValue = DELAY_SELECT_HI;	// read high bit
+		bDelayValue = DELAY_SELECT_LO | (bDelayValue << 1);	// read low bit
+
+		switch(bDelayValue)
+		{
+		case DELAY_A:	// shortest delay
+			Sleep(500);		// 0.5 sec
+			break;
+
+		case DELAY_B:
+			Sleep(5000);	// 5 sec
+			break;
+
+		case DELAY_C:
+			Sleep(20000);	// 20 sec
+			break;
+
+		case DELAY_D:
+			Sleep(60000);	// 1 min
+			break;
+		}
 	}
 }

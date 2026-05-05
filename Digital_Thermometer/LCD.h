@@ -50,6 +50,7 @@
 #define START_OF_SECOND_LINE	0x40
 
 #define LCD_LINE_LENGTH		16	// length of LCD line of M1632 LCD
+#define NUM_LCD_LINES		2	// number of lines in LCD matrix
 
 // Mapping of LCD pins to microcontroller ports
 // --------------------------------------------

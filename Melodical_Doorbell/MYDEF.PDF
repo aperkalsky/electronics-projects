@@ -1,0 +1,8 @@
+; Melody playing status word (register 20h)
+bMelPause	BIT	000h	; if set, pause in melody
+bMelTerm	BIT	001h	; if set, melody is finished
+
+; Bits dedicated for random number generator
+;vPswHold	DATA	021h	; holds PSW value
+vMelIndex	DATA	022h	; holds	melody index in the range 0...127
+vMaxMelCnt	DATA	023h	; holds total number of melodies (<=127)

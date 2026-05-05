@@ -1,0 +1,29 @@
+	Melody playing strategy:
+
+0. Note processing tables are copied from ROM to internal RAM upper 128
+   bytes location.
+
+1. DPTR holds start address of current melody
+	mov	DPTR, _MELODY_START_ADDRESS_
+
+2. Each note is loaded as follows:
+	clr	A		; initial index is 0
+	push	A		; save this index
+BEGIN:
+	pop	A		; load current index value
+	movc	A, @A+DPTR	; read byte from mem location (A+DPTR)
+	jz	END		; zero means that melody is finished
+	... process byte and load received values to the timer ...
+		( lcall PROCESS_FREQ )
+	pop	A		; reload last index value
+	( if( A == 0xFF) DPTR += 0xFF)	; shift start address if needed
+	inc	A		; increment table index
+	push	A		; save it again
+	movc	A, @A+DPTR	; load next melody byte (duration)
+	... process byte and load received values to the timer ...
+		( lcall PROCESS_DURAT )
+
+3. Then call note playing routine
+		( lcall PLAY_NOTE )
+4. Then return
+	ljmp	BEGIN		; go back to the beginning

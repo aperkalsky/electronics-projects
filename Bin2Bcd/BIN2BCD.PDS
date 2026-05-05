@@ -1,0 +1,225 @@
+;PALASM Design Description
+
+;---------------------------------- Declaration Segment ------------
+TITLE    Binary to BCD converter
+PATTERN  00
+REVISION 00
+AUTHOR   Alexander
+COMPANY
+DATE     09/04/97
+
+CHIP  _bin2bcd  PALCE16V8
+
+;---------------------------------- PIN Declarations ---------------
+PIN  2..9       IN[1..8]                              COMBINATORIAL ; INPUT
+PIN  10         GND                                                 ; INPUT
+PIN  12..15     LODIGIT[1..4]                         COMBINATORIAL ; OUTPUT
+PIN  16..19     HIDIGIT[1..4]                         COMBINATORIAL ; OUTPUT
+PIN  20         VCC                                                 ; INPUT
+;***********************************************
+;    IN[1] is MSB,          IN[8] is LSB
+;LO(HI)DIGIT[1] is MSB, LO(HI)DIGIT[4] is LSB
+;***********************************************
+;----------------------------------- Boolean Equation Segment ------
+EQUATIONS
+CASE( IN[1..8] )
+  BEGIN
+    0..9:
+      BEGIN
+        HIDIGIT[1..4] = 0  LODIGIT[1..4] = IN[5..8]
+      END
+    10:
+      BEGIN  HIDIGIT[1..4] = 1  LODIGIT[1..4] = 0  END
+    11:
+      BEGIN  HIDIGIT[1..4] = 1  LODIGIT[1..4] = 1  END
+    12:
+      BEGIN  HIDIGIT[1..4] = 1  LODIGIT[1..4] = 2  END
+    13:
+      BEGIN  HIDIGIT[1..4] = 1  LODIGIT[1..4] = 3  END
+    14:
+      BEGIN  HIDIGIT[1..4] = 1  LODIGIT[1..4] = 4  END
+    15:
+      BEGIN  HIDIGIT[1..4] = 1  LODIGIT[1..4] = 5  END
+    16:
+      BEGIN  HIDIGIT[1..4] = 1  LODIGIT[1..4] = 6  END
+    17:
+      BEGIN  HIDIGIT[1..4] = 1  LODIGIT[1..4] = 7  END
+    18:
+      BEGIN  HIDIGIT[1..4] = 1  LODIGIT[1..4] = 8  END
+    19:
+      BEGIN  HIDIGIT[1..4] = 1  LODIGIT[1..4] = 9  END
+    20:
+      BEGIN  HIDIGIT[1..4] = 2  LODIGIT[1..4] = 0  END
+    21:
+      BEGIN  HIDIGIT[1..4] = 2  LODIGIT[1..4] = 1  END
+    22:
+      BEGIN  HIDIGIT[1..4] = 2  LODIGIT[1..4] = 2  END
+    23:
+      BEGIN  HIDIGIT[1..4] = 2  LODIGIT[1..4] = 3  END
+    24:
+      BEGIN  HIDIGIT[1..4] = 2  LODIGIT[1..4] = 4  END
+    25:
+      BEGIN  HIDIGIT[1..4] = 2  LODIGIT[1..4] = 5  END
+    26:
+      BEGIN  HIDIGIT[1..4] = 2  LODIGIT[1..4] = 6  END
+    27:
+      BEGIN  HIDIGIT[1..4] = 2  LODIGIT[1..4] = 7  END
+    28:
+      BEGIN  HIDIGIT[1..4] = 2  LODIGIT[1..4] = 8  END
+    29:
+      BEGIN  HIDIGIT[1..4] = 2  LODIGIT[1..4] = 9  END
+    30:
+      BEGIN  HIDIGIT[1..4] = 3  LODIGIT[1..4] = 0  END
+    31:
+      BEGIN  HIDIGIT[1..4] = 3  LODIGIT[1..4] = 1  END
+    32:
+      BEGIN  HIDIGIT[1..4] = 3  LODIGIT[1..4] = 2  END
+    33:
+      BEGIN  HIDIGIT[1..4] = 3  LODIGIT[1..4] = 3  END
+    34:
+      BEGIN  HIDIGIT[1..4] = 3  LODIGIT[1..4] = 4  END
+    35:
+      BEGIN  HIDIGIT[1..4] = 3  LODIGIT[1..4] = 5  END
+    36:
+      BEGIN  HIDIGIT[1..4] = 3  LODIGIT[1..4] = 6  END
+    37:
+      BEGIN  HIDIGIT[1..4] = 3  LODIGIT[1..4] = 7  END
+    38:
+      BEGIN  HIDIGIT[1..4] = 3  LODIGIT[1..4] = 8  END
+    39:
+      BEGIN  HIDIGIT[1..4] = 3  LODIGIT[1..4] = 9  END
+    40:
+      BEGIN  HIDIGIT[1..4] = 4  LODIGIT[1..4] = 0  END
+    41:
+      BEGIN  HIDIGIT[1..4] = 4  LODIGIT[1..4] = 1  END
+    42:
+      BEGIN  HIDIGIT[1..4] = 4  LODIGIT[1..4] = 2  END
+    43:
+      BEGIN  HIDIGIT[1..4] = 4  LODIGIT[1..4] = 3  END
+    44:
+      BEGIN  HIDIGIT[1..4] = 4  LODIGIT[1..4] = 4  END
+    45:
+      BEGIN  HIDIGIT[1..4] = 4  LODIGIT[1..4] = 5  END
+    46:
+      BEGIN  HIDIGIT[1..4] = 4  LODIGIT[1..4] = 6  END
+    47:
+      BEGIN  HIDIGIT[1..4] = 4  LODIGIT[1..4] = 7  END
+    48:
+      BEGIN  HIDIGIT[1..4] = 4  LODIGIT[1..4] = 8  END
+    49:
+      BEGIN  HIDIGIT[1..4] = 4  LODIGIT[1..4] = 9  END
+    50:
+      BEGIN  HIDIGIT[1..4] = 5  LODIGIT[1..4] = 0  END
+    51:
+      BEGIN  HIDIGIT[1..4] = 5  LODIGIT[1..4] = 1  END
+    52:
+      BEGIN  HIDIGIT[1..4] = 5  LODIGIT[1..4] = 2  END
+    53:
+      BEGIN  HIDIGIT[1..4] = 5  LODIGIT[1..4] = 3  END
+    54:
+      BEGIN  HIDIGIT[1..4] = 5  LODIGIT[1..4] = 4  END
+;    55:
+;      BEGIN  HIDIGIT[1..4] = 5  LODIGIT[1..4] = 5  END
+;    56:
+;      BEGIN  HIDIGIT[1..4] = 5  LODIGIT[1..4] = 6  END
+;    57:
+;      BEGIN  HIDIGIT[1..4] = 5  LODIGIT[1..4] = 7  END
+;    58:
+;      BEGIN  HIDIGIT[1..4] = 5  LODIGIT[1..4] = 8  END
+;    59:
+;      BEGIN  HIDIGIT[1..4] = 5  LODIGIT[1..4] = 9  END
+;    60:
+;      BEGIN  HIDIGIT[1..4] = 6  LODIGIT[1..4] = 0  END
+;    61:
+;      BEGIN  HIDIGIT[1..4] = 6  LODIGIT[1..4] = 1  END
+;    62:
+;      BEGIN  HIDIGIT[1..4] = 6  LODIGIT[1..4] = 2  END
+;    63:
+;      BEGIN  HIDIGIT[1..4] = 6  LODIGIT[1..4] = 3  END
+;    64:
+;      BEGIN  HIDIGIT[1..4] = 6  LODIGIT[1..4] = 4  END
+;    65:
+;      BEGIN  HIDIGIT[1..4] = 6  LODIGIT[1..4] = 5  END
+;    66:
+;      BEGIN  HIDIGIT[1..4] = 6  LODIGIT[1..4] = 6  END
+;    67:
+;      BEGIN  HIDIGIT[1..4] = 6  LODIGIT[1..4] = 7  END
+;    68:
+;      BEGIN  HIDIGIT[1..4] = 6  LODIGIT[1..4] = 8  END
+;    69:
+;      BEGIN  HIDIGIT[1..4] = 6  LODIGIT[1..4] = 9  END
+;    70:
+;      BEGIN  HIDIGIT[1..4] = 7  LODIGIT[1..4] = 0  END
+;    71:
+;      BEGIN  HIDIGIT[1..4] = 7  LODIGIT[1..4] = 1  END
+;    72:
+;      BEGIN  HIDIGIT[1..4] = 7  LODIGIT[1..4] = 2  END
+;    73:
+;      BEGIN  HIDIGIT[1..4] = 7  LODIGIT[1..4] = 3  END
+;    74:
+;      BEGIN  HIDIGIT[1..4] = 7  LODIGIT[1..4] = 4  END
+;    75:
+;      BEGIN  HIDIGIT[1..4] = 7  LODIGIT[1..4] = 5  END
+;    76:
+;      BEGIN  HIDIGIT[1..4] = 7  LODIGIT[1..4] = 6  END
+;    77:
+;      BEGIN  HIDIGIT[1..4] = 7  LODIGIT[1..4] = 7  END
+;    78:
+;      BEGIN  HIDIGIT[1..4] = 7  LODIGIT[1..4] = 8  END
+;    79:
+;      BEGIN  HIDIGIT[1..4] = 7  LODIGIT[1..4] = 9  END
+  END
+
+;----------------------------------- Simulation Segment ------------
+SIMULATION
+TRACE_ON IN[1..8] LODIGIT[1..4] HIDIGIT[1..4]
+SETF /IN[1..8]		;0
+SETF /IN[1] /IN[2] /IN[3] /IN[4] /IN[5] /IN[6] /IN[7]  IN[8] ;1
+SETF /IN[1] /IN[2] /IN[3] /IN[4] /IN[5] /IN[6]  IN[7] /IN[8] ;2
+SETF /IN[1] /IN[2] /IN[3] /IN[4] /IN[5] /IN[6]  IN[7]  IN[8] ;3
+SETF /IN[1] /IN[2] /IN[3] /IN[4] /IN[5]  IN[6] /IN[7] /IN[8] ;4
+SETF /IN[1] /IN[2] /IN[3] /IN[4] /IN[5]  IN[6] /IN[7]  IN[8] ;5
+SETF /IN[1] /IN[2] /IN[3] /IN[4] /IN[5]  IN[6]  IN[7] /IN[8] ;6
+SETF /IN[1] /IN[2] /IN[3] /IN[4] /IN[5]  IN[6]  IN[7]  IN[8] ;7
+SETF /IN[1] /IN[2] /IN[3] /IN[4]  IN[5] /IN[6] /IN[7] /IN[8] ;8
+SETF /IN[1] /IN[2] /IN[3] /IN[4]  IN[5] /IN[6] /IN[7]  IN[8] ;9
+SETF /IN[1] /IN[2] /IN[3] /IN[4]  IN[5] /IN[6]  IN[7] /IN[8] ;10
+SETF /IN[1] /IN[2] /IN[3] /IN[4]  IN[5] /IN[6]  IN[7]  IN[8] ;11
+SETF /IN[1] /IN[2] /IN[3] /IN[4]  IN[5]  IN[6] /IN[7] /IN[8] ;12
+SETF /IN[1] /IN[2] /IN[3] /IN[4]  IN[5]  IN[6] /IN[7]  IN[8] ;13
+SETF /IN[1] /IN[2] /IN[3] /IN[4]  IN[5]  IN[6]  IN[7] /IN[8] ;14
+SETF /IN[1] /IN[2] /IN[3] /IN[4]  IN[5]  IN[6]  IN[7]  IN[8] ;15
+SETF /IN[1] /IN[2] /IN[3] /IN[4] /IN[5] /IN[6] /IN[7] /IN[8] ;16
+SETF /IN[1] /IN[2] /IN[3] /IN[4] /IN[5] /IN[6] /IN[7] /IN[8] ;17
+SETF /IN[1] /IN[2] /IN[3] /IN[4] /IN[5] /IN[6] /IN[7] /IN[8] ;18
+SETF /IN[1] /IN[2] /IN[3] /IN[4] /IN[5] /IN[6] /IN[7] /IN[8] ;19
+SETF /IN[1] /IN[2] /IN[3] /IN[4] /IN[5] /IN[6] /IN[7] /IN[8] ;20
+SETF /IN[1] /IN[2] /IN[3] /IN[4] /IN[5] /IN[6] /IN[7] /IN[8] ;21
+SETF /IN[1] /IN[2] /IN[3] /IN[4] /IN[5] /IN[6] /IN[7] /IN[8] ;22
+SETF /IN[1] /IN[2] /IN[3] /IN[4] /IN[5] /IN[6] /IN[7] /IN[8] ;23
+SETF /IN[1] /IN[2] /IN[3] /IN[4] /IN[5] /IN[6] /IN[7] /IN[8] ;24
+SETF /IN[1] /IN[2] /IN[3] /IN[4] /IN[5] /IN[6] /IN[7] /IN[8] ;25
+SETF /IN[1] /IN[2] /IN[3] /IN[4] /IN[5] /IN[6] /IN[7] /IN[8] ;26
+SETF /IN[1] /IN[2] /IN[3] /IN[4] /IN[5] /IN[6] /IN[7] /IN[8] ;27
+SETF /IN[1] /IN[2] /IN[3] /IN[4] /IN[5] /IN[6] /IN[7] /IN[8] ;28
+SETF /IN[1] /IN[2] /IN[3] /IN[4] /IN[5] /IN[6] /IN[7] /IN[8] ;29
+SETF /IN[1] /IN[2] /IN[3] /IN[4] /IN[5] /IN[6] /IN[7] /IN[8] ;30
+SETF /IN[1] /IN[2] /IN[3] /IN[4] /IN[5] /IN[6] /IN[7] /IN[8] ;31
+SETF /IN[1] /IN[2] /IN[3] /IN[4] /IN[5] /IN[6] /IN[7] /IN[8] ;32
+SETF /IN[1] /IN[2] /IN[3] /IN[4] /IN[5] /IN[6] /IN[7] /IN[8] ;33
+SETF /IN[1] /IN[2] /IN[3] /IN[4] /IN[5] /IN[6] /IN[7] /IN[8] ;34
+SETF /IN[1] /IN[2] /IN[3] /IN[4] /IN[5] /IN[6] /IN[7] /IN[8] ;35
+SETF /IN[1] /IN[2] /IN[3] /IN[4] /IN[5] /IN[6] /IN[7] /IN[8] ;36
+SETF /IN[1] /IN[2] /IN[3] /IN[4] /IN[5] /IN[6] /IN[7] /IN[8] ;37
+SETF /IN[1] /IN[2] /IN[3] /IN[4] /IN[5] /IN[6] /IN[7] /IN[8] ;38
+SETF /IN[1] /IN[2] /IN[3] /IN[4] /IN[5] /IN[6] /IN[7] /IN[8] ;39
+SETF /IN[1] /IN[2] /IN[3] /IN[4] /IN[5] /IN[6] /IN[7] /IN[8] ;40
+SETF /IN[1] /IN[2] /IN[3] /IN[4] /IN[5] /IN[6] /IN[7] /IN[8] ;41
+SETF /IN[1] /IN[2] /IN[3] /IN[4] /IN[5] /IN[6] /IN[7] /IN[8] ;42
+SETF /IN[1] /IN[2] /IN[3] /IN[4] /IN[5] /IN[6] /IN[7] /IN[8] ;43
+SETF /IN[1] /IN[2] /IN[3] /IN[4] /IN[5] /IN[6] /IN[7] /IN[8] ;44
+SETF /IN[1] /IN[2] /IN[3] /IN[4] /IN[5] /IN[6] /IN[7] /IN[8] ;45
+SETF /IN[1] /IN[2] /IN[3] /IN[4] /IN[5] /IN[6] /IN[7] /IN[8] ;46
+SETF /IN[1] /IN[2] /IN[3] /IN[4] /IN[5] /IN[6] /IN[7] /IN[8] ;47
+TRACE_OFF
+;-------------------------------------------------------------------

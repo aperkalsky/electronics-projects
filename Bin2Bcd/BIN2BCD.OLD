@@ -1,0 +1,44 @@
+;PALASM Design Description
+
+;---------------------------------- Declaration Segment ------------
+TITLE    Binary to BCD converter
+PATTERN  00
+REVISION 00
+AUTHOR   Alexander
+COMPANY  
+DATE     09/04/97
+
+CHIP  _bin2bcd  PALCE16V8
+
+;---------------------------------- PIN Declarations ---------------
+PIN  2..9       IN[0..7]                              COMBINATORIAL ; INPUT 
+PIN  10         GND                                              ; INPUT 
+PIN  12..15     LOW[0..3]                             COMBINATORIAL ; OUTPUT
+PIN  16..19     HIGH[0..3]                            COMBINATORIAL ; OUTPUT
+PIN  20         VCC                                                 ; INPUT
+;----------------------------------- Boolean Equation Segment ------
+EQUATIONS
+CASE ( IN[0..7] )
+        BEGIN
+                0:
+                        BEGIN
+                                LOW[0..3] = #D0
+                                HIGH[0..3] = #D0
+                        END
+                OTHERWISE:
+                        BEGIN
+                                LOW[0..3] = #D9
+                                HIGH[0..3] = #D9
+                        END
+        END
+;----------------------------------- Simulation Segment ------------
+SIMULATION
+TRACE_ON IN[0..7]
+SETF /IN[0] /IN[2] IN[1] IN[3..7]                       
+CHECK LOW[0..3] HIGH[0..3]
+SETF /IN[0..7]
+CHECK LOW[0..3] HIGH[0..3]
+SETF IN[0..7]
+CHECK LOW[0..3] HIGH[0..3]
+TRACE_OFF
+;-------------------------------------------------------------------

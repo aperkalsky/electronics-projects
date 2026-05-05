@@ -1,0 +1,9 @@
+CompanyName	=	"Alex & Felix Hobby Club" 
+FileDescription =	"Driver for 27C512 EPROM Programmer"
+FileVersion	=	"Version 1.00" 
+InternalName	=	"PROG_LPT"
+LegalCopyright	= 	"Copyright \251 2000, Alexander Perkalsky"
+OriginalFilename = 	"prog_lpt.vxd"
+ProductName	=	"EPROM Programmer"
+ProductVersion	= 	"Version 1.00"
+Translation	=	0x409, 0x4E4

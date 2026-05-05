@@ -1,0 +1,6 @@
+1. Make this app single instance
+2. Add a confirmation message box on exit (Y/N)
+3. Check for driver presence before displaying a dialog
+4. Grey out unnecessary buttons according to situation
+5. Add Random Fill option to memory buffer
+6. While blank checking write address of failure and its value
